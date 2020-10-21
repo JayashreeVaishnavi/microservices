@@ -3,23 +3,35 @@
 namespace App\Http\Controllers\API\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\LoginRequest;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class AuthController extends Controller
 {
     /**
      * Get a JWT via given credentials.
      *
+     * @param LoginRequest $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function login()
+    public function login(LoginRequest $request)
     {
-        $credentials = request(['email', 'password']);
+        $credentials = $request->only(['email', 'password']);
+        try {
+            if (!$token = JWTAuth::attempt($credentials)) {
+                return errorResponse('UNAUTHORIZED_ERROR', 'User unauthorized.', STATUS_CODE_UNAUTHORIZED);
+            }
 
-        if (!$token = auth()->attempt($credentials)) {
-            return response()->json(['error' => 'Unauthorized'], 401);
+            return response()->json([
+                'access_token' => $token,
+                'token_type' => 'bearer',
+                'user' => auth()->user(),
+            ], STATUS_CODE_SUCCESS);
+        } catch (\Throwable $exception) {
+            logError($exception, 'Error while logging in', 'AuthController@login');
+
+            return errorResponse('INTERNAL_ERROR', 'Something went wrong.', STATUS_CODE_INTERNAL_ERROR);
         }
-
-        return $this->respondWithToken($token);
     }
 
     /**
@@ -29,24 +41,14 @@ class AuthController extends Controller
      */
     public function logout()
     {
-        auth()->logout();
+        try {
+            auth()->logout();
 
-        return response()->json(['message' => 'Successfully logged out']);
-    }
+            return response()->json(['message' => 'Successfully logged out']);
+        } catch (\Throwable $exception) {
+            logError($exception, 'Error while logout', 'AuthController@logout');
 
-    /**
-     * Get the token array structure.
-     *
-     * @param string $token
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    protected function respondWithToken($token)
-    {
-        return response()->json([
-            'access_token' => $token,
-            'token_type' => 'bearer',
-            'expires_in' => auth()->factory()->getTTL() * 60,
-        ]);
+            return errorResponse('INTERNAL_ERROR', 'Something went wrong.', STATUS_CODE_INTERNAL_ERROR);
+        }
     }
 }

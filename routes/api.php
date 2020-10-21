@@ -13,6 +13,10 @@ use Illuminate\Support\Facades\Route;
 |
 */
 Route::group(['prefix' => 'v1'], function () {
-    Route::resource('details', 'V1\UserDetailController');
-    Route::get('amount-details','V1\UserDetailController@listUserDetailsWithTotal');
+    Route::post('login', 'V1\AuthController@login')->name('login');
+    Route::group(['middleware' => 'jwt.auth.user'], function () {
+        Route::post('logout', 'V1\AuthController@logout')->name('logout');
+        Route::resource('details', 'V1\UserDetailController');
+        Route::get('amount-details', 'V1\UserDetailController@listUserDetailsWithTotal')->name('account_details');
+    });
 });

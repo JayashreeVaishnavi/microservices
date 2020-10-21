@@ -24,14 +24,14 @@ class StoreUserDetailRequest extends FormRequest
     public function rules()
     {
         return [
-            'first_name' => 'required|max:40',
-            'last_name' => 'required|max:40',
+            'first_name' => 'required',
+            'last_name' => 'required',
             'email' => 'required|email|unique:user_details,email',
             'phone_number' => 'required|min:10|max:10',
             'address' => 'sometimes|string',
             'accounts.*.bank_name' => 'required|string',
             'accounts.*.account_number' => 'required|min:9|max:18',
-            'accounts.*.amount' => 'required|min:1|max:10',
+            'accounts.*.amount' => 'required|numeric',
         ];
     }
 }

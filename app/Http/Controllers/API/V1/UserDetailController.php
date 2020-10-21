@@ -25,9 +25,11 @@ class UserDetailController extends Controller
             if (!$limit) {
                 return UserDetailResource::collection(UserDetail::get());
             }
+
             return UserDetailResource::collection(UserDetail::paginate($limit));
         } catch (\Throwable $exception) {
             logError($exception, 'Error while loading user details', 'UserDetailController@index');
+
             return response()->json(['error' => ['common_error' => [['code' => 'INTERNAL_ERROR', 'message' => 'Something went wrong.']]]], 500);
         }
     }
@@ -45,16 +47,19 @@ class UserDetailController extends Controller
         foreach ($request->accounts as $account) {
             $accountInput[] = Arr::only($account, Account::REQUEST_ONLY_INPUT);
         }
+
         try {
             DB::beginTransaction();
             $detail = UserDetail::create($input);
             $detail->accounts()->createMany($accountInput);
             DB::commit();
+
             return new UserDetailResource($detail->load('accounts'));
         } catch (\Throwable $exception) {
             DB::rollBack();
             logError($exception, 'Error while storing user details', 'UserDetailController@store', $request->all());
-            return response()->json(['error' => ['common_error' => [['code' => 'INTERNAL_ERROR', 'message' => 'Something went wrong.']]]], 500);
+
+            return errorResponse('INTERNAL_ERROR', 'Something went wrong.', STATUS_CODE_INTERNAL_ERROR);
         }
     }
 
@@ -69,9 +74,9 @@ class UserDetailController extends Controller
         try {
             return new UserDetailResource($detail->load('accounts'));
         } catch (\Throwable $exception) {
-            DB::rollBack();
             logError($exception, 'Error while displaying user details', 'UserDetailController@show');
-            return response()->json(['error' => ['common_error' => [['code' => 'INTERNAL_ERROR', 'message' => 'Something went wrong.']]]], 500);
+
+            return errorResponse('INTERNAL_ERROR', 'Something went wrong.', STATUS_CODE_INTERNAL_ERROR);
         }
     }
 
@@ -99,13 +104,14 @@ class UserDetailController extends Controller
             if ($input) {
                 $detail->update($input);
             }
-
             DB::commit();
+
             return new UserDetailResource($userDetail->fresh('accounts'));
         } catch (\Throwable $exception) {
             DB::rollBack();
             logError($exception, 'Error while updating user details', 'UserDetailController@update', $request->all());
-            return response()->json(['error' => ['common_error' => [['code' => 'INTERNAL_ERROR', 'message' => 'Something went wrong.']]]], 500);
+
+            return errorResponse('INTERNAL_ERROR', 'Something went wrong.', STATUS_CODE_INTERNAL_ERROR);
         }
     }
 
@@ -122,11 +128,13 @@ class UserDetailController extends Controller
             $detail->accounts()->delete();
             $detail->delete();
             DB::commit();
+
             return response()->json(['message' => 'User detail deleted successfully'], STATUS_CODE_SUCCESS);
         } catch (\Throwable $exception) {
             DB::rollBack();
             logError($exception, 'Error while deleting user details', 'UserDetailController@destroy');
-            return response()->json(['error' => ['common_error' => [['code' => 'INTERNAL_ERROR', 'message' => 'Something went wrong.']]]], 500);
+
+            return errorResponse('INTERNAL_ERROR', 'Something went wrong.', STATUS_CODE_INTERNAL_ERROR);
         }
     }
 
@@ -141,10 +149,12 @@ class UserDetailController extends Controller
             if (!$limit) {
                 return UserDetailResource::collection(UserDetail::with('accounts')->get());
             }
+
             return UserDetailResource::collection(UserDetail::with('accounts')->paginate($limit));
         } catch (\Throwable $exception) {
             logError($exception, 'Error while loading user details', 'UserDetailController@listUserDetailsWithTotal');
-            return response()->json(['error' => ['common_error' => [['code' => 'INTERNAL_ERROR', 'message' => 'Something went wrong.']]]], 500);
+
+            return errorResponse('INTERNAL_ERROR', 'Something went wrong.', STATUS_CODE_INTERNAL_ERROR);
         }
     }
 }

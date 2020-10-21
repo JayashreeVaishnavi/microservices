@@ -19,3 +19,26 @@ function logError($error, $message, $location, $params = [])
         ],
     ]);
 }
+
+/**
+ * Formatted error response
+ *
+ * @param $code
+ * @param $message
+ * @param $statusCode
+ * @return \Illuminate\Http\JsonResponse
+ */
+function errorResponse($code, $message, $statusCode)
+{
+    return response()->json(getCommonErrorResponse($code, $message), $statusCode);
+}
+
+/**
+ * @param $code
+ * @param $message
+ * @return array
+ */
+function getCommonErrorResponse($code, $message)
+{
+    return ['common_error' => [['code' => $code, 'message' => $message]]];
+}
